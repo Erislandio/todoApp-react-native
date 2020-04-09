@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import commonStyles from '../styles/commonStyles';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 
-function Task({ desc, estimateAt, doneAt, id, toggleTasks }) {
+function Task({ desc, estimateAt, doneAt, id, toggleTasks, onDelete }) {
 	const doneOrNotStyle =
 		doneAt !== null
 			? {
@@ -16,16 +17,39 @@ function Task({ desc, estimateAt, doneAt, id, toggleTasks }) {
 	const date = doneAt ? doneAt : estimateAt;
 	const formatedDate = moment(date).locale('pt-br').format('ddd, D [de] MMM');
 
+	const renderRightActions = () => {
+		return (
+			<TouchableOpacity style={styles.renderRightActions} onPress={() => onDelete(id)}>
+				<Icon name="trash" size={30} color="#fff" />
+			</TouchableOpacity>
+		);
+	};
+
+	const renderLeftActions = () => {
+		return (
+			<TouchableOpacity style={styles.renderLeftActions}>
+				<Icon name="trash" size={20} color="#fff" />
+				<Text style={styles.exclude}>Excluir</Text>
+			</TouchableOpacity>
+		);
+	};
+
 	return (
-		<View style={styles.container}>
-			<TouchableWithoutFeedback onPress={() => toggleTasks(id)}>
-				<View style={styles.checkContainer}>{getCheckView(doneAt)}</View>
-			</TouchableWithoutFeedback>
-			<View>
-				<Text style={[ styles.desc, doneOrNotStyle ]}>{desc}</Text>
-				<Text style={styles.date}>{formatedDate}</Text>
+		<Swipeable
+			onSwipeableLeftOpen={() => onDelete(id)}
+			renderRightActions={renderRightActions}
+			renderLeftActions={renderLeftActions}
+		>
+			<View style={styles.container}>
+				<TouchableWithoutFeedback onPress={() => toggleTasks(id)}>
+					<View style={styles.checkContainer}>{getCheckView(doneAt)}</View>
+				</TouchableWithoutFeedback>
+				<View>
+					<Text style={[ styles.desc, doneOrNotStyle ]}>{desc}</Text>
+					<Text style={styles.date}>{formatedDate}</Text>
+				</View>
 			</View>
-		</View>
+		</Swipeable>
 	);
 }
 
@@ -47,7 +71,8 @@ const styles = StyleSheet.create({
 		borderColor: '#aaa',
 		borderBottomWidth: StyleSheet.hairlineWidth,
 		alignItems: 'center',
-		paddingVertical: 13
+		paddingVertical: 13,
+		backgroundColor: commonStyles.colors.secondary
 	},
 	checkContainer: {
 		width: '20%',
@@ -79,6 +104,27 @@ const styles = StyleSheet.create({
 		fontFamily: commonStyles.fontFamily,
 		color: commonStyles.colors.subText,
 		fontSize: 12
+	},
+	renderRightActions: {
+		backgroundColor: '#e74c3c',
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 20
+	},
+	renderLeftActions: {
+		backgroundColor: '#e74c3c',
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 20,
+		flex: 1
+	},
+	exclude: {
+		color: commonStyles.colors.secondary,
+		fontFamily: commonStyles.fontFamily,
+		fontSize: 13,
+		margin: 10
 	}
 });
 

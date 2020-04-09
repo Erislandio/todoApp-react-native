@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import commonStyles from '~/styles/commonStyles';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import moment from 'moment';
 
 const initialState = {
 	desc: '',
@@ -39,11 +40,30 @@ export default class AddTasks extends Component {
 			/>
 		);
 
+		const dateString = moment(this.state.date).format('dddd, D [de] MMMM [de] YYYY');
+
 		if (Platform.OS === 'android') {
-			datePicker = <View />;
+			datePicker = (
+				<View>
+					<TouchableOpacity onPress={() => this.setState({ showDatePicker: !this.state.showDatePicker })}>
+						<Text style={styles.date}>{dateString}</Text>
+					</TouchableOpacity>
+					{this.state.showDatePicker ? datePicker : null}
+				</View>
+			);
 		}
 
 		return datePicker;
+	};
+
+	save = () => {
+		const newTask = {
+			desc: this.state.desc,
+			date: this.state.date
+		};
+
+		this.props.onSave && this.props.onSave(newTask);
+		this.setState({ ...initialState });
 	};
 
 	render() {
@@ -70,7 +90,7 @@ export default class AddTasks extends Component {
 								Cancelar
 							</Text>
 						</TouchableOpacity>
-						<TouchableOpacity>
+						<TouchableOpacity onPress={this.save}>
 							<Text style={styles.button}>Salvar</Text>
 						</TouchableOpacity>
 					</View>
@@ -118,5 +138,10 @@ const styles = StyleSheet.create({
 		borderRadius: 6,
 		margin: 15,
 		paddingHorizontal: 15
+	},
+	date: {
+		fontFamily: commonStyles.fontFamily,
+		fontSize: 19,
+		marginHorizontal: 20
 	}
 });

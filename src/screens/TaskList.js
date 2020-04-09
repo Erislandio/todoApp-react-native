@@ -1,52 +1,46 @@
 import React, { Fragment, Component } from 'react';
-import { View, Text, ImageBackground, StyleSheet, StatusBar, FlatList, TouchableOpacity, Platform } from 'react-native';
+import {
+	View,
+	Text,
+	ImageBackground,
+	StyleSheet,
+	StatusBar,
+	FlatList,
+	TouchableOpacity,
+	Platform,
+	Alert
+} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import todayImage from '../../assets/imgs/today.jpg';
 import commonStyles from '../styles/commonStyles';
 import Task from '../components/Task';
 import AddTasks from './AddTasks';
-
+import AsyncStorage from '@react-native-community/async-storage';
 import moment from 'moment';
 import 'moment/locale/pt-br';
+
+const intial_state = {
+	showModal: false,
+	showDoneTasks: false,
+	visibleTasks: [],
+	tasks: []
+};
 
 export default class App extends Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			showModal: false,
-			showDoneTasks: true,
-			visibleTasks: [],
-			tasks: [
-				{
-					id: Math.random(),
-					desc: 'Comprar Carro',
-					estimateAt: new Date(),
-					doneAt: new Date()
-				},
-				{
-					id: Math.random(),
-					desc: 'Comprar Carro',
-					estimateAt: new Date(),
-					doneAt: new Date()
-				},
-				{
-					id: Math.random(),
-					desc: 'Comprar Carro',
-					estimateAt: new Date(),
-					doneAt: new Date()
-				},
-				{
-					id: Math.random(),
-					desc: 'Comprar Carro',
-					estimateAt: new Date(),
-					doneAt: new Date()
-				}
-			]
+			...intial_state
 		};
 	}
 
-	componentDidMount = () => {
+	componentDidMount = async () => {
+		const stateString = await AsyncStorage.getItem('state');
+		const state = JSON.parse(stateString) || intial_state;
+
+		this.setState({ ...state });
+
 		this.filterTasks();
 	};
 
@@ -58,7 +52,7 @@ export default class App extends Component {
 			}
 		});
 
-		this.setState({ tasks }, this.filterTasks());
+		this.setState({ tasks }, this.filterTasks);
 	};
 
 	toggleFilter = () => {
@@ -77,6 +71,31 @@ export default class App extends Component {
 		}
 
 		this.setState({ ...this.state, visibleTasks });
+		AsyncStorage.setItem('state', JSON.stringfy(this.state));
+	};
+
+	addTasks = (newTasks) => {
+		if (!newTasks.desc || !newTasks.date) {
+			Alert.alert('Dados inválidos', 'Descrição não foi informada ');
+		}
+
+		const tasks = [ ...this.state.tasks ];
+
+		const { desc, date } = newTasks;
+
+		tasks.push({
+			id: Math.random(),
+			desc,
+			estimateAt: date,
+			doneAt: null
+		});
+
+		this.setState({ ...this.state, tasks, showModal: false });
+	};
+
+	removeTask = (id) => {
+		const tasks = this.state.tasks.filter((task) => task.id !== id);
+		this.setState({ ...this.state, tasks }, this.filterTasks);
 	};
 
 	render() {
@@ -90,6 +109,7 @@ export default class App extends Component {
 					<AddTasks
 						isVisible={showModal}
 						onCancel={() => this.setState({ ...this.state, showModal: false })}
+						onSave={this.addTasks}
 					/>
 					<ImageBackground source={todayImage} style={styles.imageBackground}>
 						<View style={styles.iconBar}>
@@ -109,7 +129,7 @@ export default class App extends Component {
 							data={this.state.visibleTasks}
 							keyExtractor={(item) => `${item.id}`}
 							renderItem={({ item }) => {
-								return <Task {...item} toggleTasks={this.toggleTasks} />;
+								return <Task {...item} toggleTasks={this.toggleTasks} onDelete={this.removeTask} />;
 							}}
 						/>
 					</View>
